@@ -11,13 +11,13 @@ const ForecastInfo: FC<IForecastInfoProps> = ({ forecastData }) => {
     if (!forecastData)
       return (
         <div className="flex grow items-center justify-center">
-          <p className="text-3xl">No forecast loaded yet</p>;
+          <p className="text-3xl">No forecast loaded yet</p>
         </div>
       );
 
     return (
       <>
-        <p className="text-2xl">
+        <p className="text-2xl text-center">
           {forecastData.location.name}, {forecastData.location.country}
         </p>
         <div className="flex gap-1 items-center">
@@ -26,9 +26,9 @@ const ForecastInfo: FC<IForecastInfoProps> = ({ forecastData }) => {
             src={forecastData.current.condition.icon}
             alt={forecastData.current.condition.text}
           />
-          {forecastData.current.condition.text}
+          <p className="font-bold">{forecastData.current.condition.text}</p>
         </div>
-        <div className="flex w-full justify-between">
+        <div className="flex w-full gap-2 justify-between">
           <div>
             <p className="font-bold">Temperature:</p>
             <p>
@@ -69,7 +69,7 @@ const ForecastInfo: FC<IForecastInfoProps> = ({ forecastData }) => {
     );
   };
   return (
-    <div className="flex flex-col gap-2 items-center py-2 px-6 w-[40%] min-w-[20rem] h-full max-h-[20rem] bg-green-50 rounded-b-2xl text-background">
+    <div className="flex grow flex-col gap-2 items-center pt-2 pb-6 px-6 w-full h-full max-h-fit border border-blue-300 bg-gray-300 rounded-b-2xl text-background md:w-[40%] md:min-w-[24rem] ">
       {generateForecastInfo()}
     </div>
   );

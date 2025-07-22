@@ -31,7 +31,7 @@ const CitySearchBar: FC<ICitySearchBarProps> = ({
     search: debouncedSearch,
   });
 
-  const addToSearchHistory = (city: City) => {
+  const handleAddToSearchHistory = (city: City) => {
     const index = searchHistory.findIndex((c) => c.url === city.url);
     const newSearchHistory = [...searchHistory];
     if (index !== -1) {
@@ -44,7 +44,7 @@ const CitySearchBar: FC<ICitySearchBarProps> = ({
     );
   };
 
-  const removeFromSearchHistory = (city: City) => {
+  const handleRemoveFromSearchHistory = (city: City) => {
     const newHistory = searchHistory.map((historyCity) =>
       historyCity.id === city.id
         ? { ...historyCity, deleted: !historyCity.deleted }
@@ -54,25 +54,27 @@ const CitySearchBar: FC<ICitySearchBarProps> = ({
     localStorage.setItem("searchHistory", JSON.stringify(newHistory));
   };
 
+  const handleGetForecast = () => {
+    if (!selectedCity) return;
+    handleAddToSearchHistory(selectedCity);
+    onGetForecast();
+  };
+
   useEffect(() => {
     const history: (City & { deleted: boolean })[] = JSON.parse(
       typeof window !== "undefined"
         ? localStorage.getItem("searchHistory") || "[]"
         : "[]"
     );
+
     const cleanHistory = history.filter((historyCity) => !historyCity.deleted);
+
     setSearchHistory(cleanHistory);
   }, []);
 
-  const handleGetForecast = () => {
-    if (!selectedCity) return;
-    addToSearchHistory(selectedCity);
-    onGetForecast();
-  };
-
   return (
-    <div className="flex flex-col gap-2 w-1/2 bg-green-50 py-8 px-4 rounded-2xl">
-      <div className="flex gap-2 grow">
+    <div className="flex flex-col gap-2 w-full border border-blue-300 bg-gray-300 py-8 px-4 rounded-t-2xl md:w-1/2 md:min-w-[28rem] md:rounded-b-2xl">
+      <div className="flex gap-2">
         <Autocomplete
           value={selectedCity}
           onChange={(event, newInputValue) => {
@@ -98,6 +100,7 @@ const CitySearchBar: FC<ICitySearchBarProps> = ({
         />
         <Button
           onClick={handleGetForecast}
+          variant="outlined"
           sx={{
             borderRadius: "1rem",
             "&:hover": {
@@ -113,14 +116,14 @@ const CitySearchBar: FC<ICitySearchBarProps> = ({
           <SearchIcon className="[&_path]:fill-background" />
         </Button>
       </div>
-      <div className="flex gap-2 flex-wrap">
+      <div className="flex gap-2 flex-wrap max-h-22 min-h-10 overflow-auto content-start">
         {searchHistory.map((city) => (
           <Button
             variant="outlined"
             color={city.deleted ? "error" : "primary"}
             key={city.url}
             onClick={() => onSelectCity(city)}
-            className="flex gap-1"
+            className="flex gap-1 h-fit"
           >
             <p
               className={clsx("text-background", {
@@ -138,7 +141,7 @@ const CitySearchBar: FC<ICitySearchBarProps> = ({
               )}
               onClick={(e) => {
                 e.stopPropagation();
-                removeFromSearchHistory(city);
+                handleRemoveFromSearchHistory(city);
               }}
             />
           </Button>

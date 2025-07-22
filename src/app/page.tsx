@@ -4,6 +4,7 @@ import CitySearchBar from "./components/CitySearchBar";
 import { useState } from "react";
 import { City } from "@/api/types";
 import ForecastInfo from "./components/ForecastInfo";
+import { weatherBackgrounds } from "@/constants/weatherTypes";
 
 export default function Home() {
   const [selectedCity, setSelectedCity] = useState<City | null>(null);
@@ -16,8 +17,15 @@ export default function Home() {
     setSelectedCity(null);
   };
 
+  const forecastBg = weatherBackgrounds.find(
+    (weather) => weather.code === forecastData?.current.condition.code
+  )?.backgroundColor;
+
   return (
-    <div className="p-4 flex flex-col h-full items-center justify-center">
+    <div
+      className="flex flex-col h-full items-center justify-center p-4"
+      style={{ backgroundColor: forecastBg }}
+    >
       <CitySearchBar
         selectedCity={selectedCity}
         onSelectCity={setSelectedCity}
