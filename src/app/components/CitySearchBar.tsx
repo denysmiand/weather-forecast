@@ -1,9 +1,11 @@
 import useGetCities from "@/api/hooks/useGetCities";
 import { City } from "@/api/types";
 import { Autocomplete, Button, TextField } from "@mui/material";
-import { FC, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import { useDebounce } from "use-debounce";
 import SearchIcon from "@mui/icons-material/Search";
+import ClearIcon from "@mui/icons-material/Clear";
+import clsx from "clsx";
 
 type ICitySearchBarProps = {
   selectedCity: City | null;
@@ -19,6 +21,9 @@ const CitySearchBar: FC<ICitySearchBarProps> = ({
   isLoadingForecast,
 }) => {
   const [search, setSearch] = useState("");
+  const [searchHistory, setSearchHistory] = useState<
+    (City & { deleted?: boolean })[]
+  >([]);
 
   const [debouncedSearch] = useDebounce(search, 500);
 
@@ -26,47 +31,119 @@ const CitySearchBar: FC<ICitySearchBarProps> = ({
     search: debouncedSearch,
   });
 
+  const addToSearchHistory = (city: City) => {
+    const index = searchHistory.findIndex((c) => c.url === city.url);
+    const newSearchHistory = [...searchHistory];
+    if (index !== -1) {
+      newSearchHistory.splice(index, 1);
+    }
+    setSearchHistory([{ ...city, deleted: false }, ...newSearchHistory]);
+    localStorage.setItem(
+      "searchHistory",
+      JSON.stringify([{ ...city, deleted: false }, ...newSearchHistory])
+    );
+  };
+
+  const removeFromSearchHistory = (city: City) => {
+    const newHistory = searchHistory.map((historyCity) =>
+      historyCity.id === city.id
+        ? { ...historyCity, deleted: !historyCity.deleted }
+        : historyCity
+    );
+    setSearchHistory(newHistory);
+    localStorage.setItem("searchHistory", JSON.stringify(newHistory));
+  };
+
+  useEffect(() => {
+    const history: (City & { deleted: boolean })[] = JSON.parse(
+      typeof window !== "undefined"
+        ? localStorage.getItem("searchHistory") || "[]"
+        : "[]"
+    );
+    const cleanHistory = history.filter((historyCity) => !historyCity.deleted);
+    setSearchHistory(cleanHistory);
+  }, []);
+
+  const handleGetForecast = () => {
+    if (!selectedCity) return;
+    addToSearchHistory(selectedCity);
+    onGetForecast();
+  };
+
   return (
-    <div className="flex gap-2 w-1/2 bg-green-50 py-8 px-4 rounded-2xl">
-      <Autocomplete
-        value={selectedCity}
-        onChange={(event, newInputValue) => {
-          onSelectCity(newInputValue);
-        }}
-        onInputChange={(event, newInputValue) => {
-          setSearch(newInputValue);
-        }}
-        loading={isLoadingCities}
-        className="w-full"
-        id="city-search"
-        options={citiesData || []}
-        renderInput={(params) => <TextField {...params} label="City" />}
-        getOptionLabel={(option) => option.name}
-        renderOption={(props, option) => (
-          <li {...props} key={option.id}>
-            <div>
-              <div>{option.name}</div>
-              <div className="text-xs text-gray-500">{option.country}</div>
-            </div>
-          </li>
-        )}
-      />
-      <Button
-        onClick={onGetForecast}
-        sx={{
-          borderRadius: "1rem",
-          "&:hover": {
-            backgroundColor: "var(--hover-color)",
-          },
-          "&:disabled": {
-            backgroundColor: "var(--disabled-color)",
-            "& path": { fill: "grey" },
-          },
-        }}
-        disabled={!selectedCity || isLoadingForecast}
-      >
-        <SearchIcon className="[&_path]:fill-black" />
-      </Button>
+    <div className="flex flex-col gap-2 w-1/2 bg-green-50 py-8 px-4 rounded-2xl">
+      <div className="flex gap-2 grow">
+        <Autocomplete
+          value={selectedCity}
+          onChange={(event, newInputValue) => {
+            onSelectCity(newInputValue);
+          }}
+          onInputChange={(event, newInputValue) => {
+            setSearch(newInputValue);
+          }}
+          loading={isLoadingCities}
+          className="w-full"
+          id="city-search"
+          options={citiesData || []}
+          renderInput={(params) => <TextField {...params} label="City" />}
+          getOptionLabel={(option) => option.name}
+          renderOption={(props, option) => (
+            <li {...props} key={option.id}>
+              <div>
+                <div>{option.name}</div>
+                <div className="text-xs text-gray-500">{option.country}</div>
+              </div>
+            </li>
+          )}
+        />
+        <Button
+          onClick={handleGetForecast}
+          sx={{
+            borderRadius: "1rem",
+            "&:hover": {
+              backgroundColor: "var(--hover-color)",
+            },
+            "&:disabled": {
+              backgroundColor: "var(--disabled-color)",
+              "& path": { fill: "grey" },
+            },
+          }}
+          disabled={!selectedCity || isLoadingForecast}
+        >
+          <SearchIcon className="[&_path]:fill-background" />
+        </Button>
+      </div>
+      <div className="flex gap-2 flex-wrap">
+        {searchHistory.map((city) => (
+          <Button
+            variant="outlined"
+            color={city.deleted ? "error" : "primary"}
+            key={city.url}
+            onClick={() => onSelectCity(city)}
+            className="flex gap-1"
+          >
+            <p
+              className={clsx("text-background", {
+                "line-through": city.deleted,
+              })}
+            >
+              {city.name}
+            </p>
+            <ClearIcon
+              className={clsx(
+                "[&_path]:fill-background transition-all duration-500 ease-in-out",
+                {
+                  "rotate-45": city.deleted,
+                }
+              )}
+              onClick={(e) => {
+                e.stopPropagation();
+                removeFromSearchHistory(city);
+              }}
+            />
+          </Button>
+        ))}
+      </div>
     </div>
   );
 };
