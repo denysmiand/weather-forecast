@@ -1,14 +1,24 @@
-"use client";
 import useGetCities from "@/api/hooks/useGetCities";
 import { City } from "@/api/types";
 import { Autocomplete, Button, TextField } from "@mui/material";
-import { useState } from "react";
+import { FC, useState } from "react";
 import { useDebounce } from "use-debounce";
 import SearchIcon from "@mui/icons-material/Search";
 
-const CitySearchBar = () => {
+type ICitySearchBarProps = {
+  selectedCity: City | null;
+  onSelectCity: (city: City | null) => void;
+  onGetForecast: () => void;
+  isLoadingForecast: boolean;
+};
+
+const CitySearchBar: FC<ICitySearchBarProps> = ({
+  selectedCity,
+  onSelectCity,
+  onGetForecast,
+  isLoadingForecast,
+}) => {
   const [search, setSearch] = useState("");
-  const [selectedCity, setSelectedCity] = useState<City | null>(null);
 
   const [debouncedSearch] = useDebounce(search, 500);
 
@@ -21,7 +31,7 @@ const CitySearchBar = () => {
       <Autocomplete
         value={selectedCity}
         onChange={(event, newInputValue) => {
-          setSelectedCity(newInputValue);
+          onSelectCity(newInputValue);
         }}
         onInputChange={(event, newInputValue) => {
           setSearch(newInputValue);
@@ -40,22 +50,20 @@ const CitySearchBar = () => {
             </div>
           </li>
         )}
-        slotProps={{
-          paper: {
-            sx: {
-              maxHeight: "10rem",
-              overflow: "auto",
-            },
-          },
-        }}
       />
       <Button
+        onClick={onGetForecast}
         sx={{
           borderRadius: "1rem",
           "&:hover": {
             backgroundColor: "var(--hover-color)",
           },
+          "&:disabled": {
+            backgroundColor: "var(--disabled-color)",
+            "& path": { fill: "grey" },
+          },
         }}
+        disabled={!selectedCity || isLoadingForecast}
       >
         <SearchIcon className="[&_path]:fill-black" />
       </Button>
