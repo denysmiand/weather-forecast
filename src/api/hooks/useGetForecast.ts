@@ -6,7 +6,6 @@ import { useState } from "react";
 const useGetForecast = () => {
   const [forecastCity, setForecastCity] = useState<string | null>(null);
   const fetchForecastData = async () => {
-    if (!forecastCity) return null;
     const response = await axios.get<ForecastData>(
       `/api/forecast.json?key=${process.env.NEXT_PUBLIC_API_KEY}&q=${forecastCity}&days=1&aqi=no&alerts=no`
     );

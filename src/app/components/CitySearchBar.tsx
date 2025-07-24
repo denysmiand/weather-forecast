@@ -100,6 +100,7 @@ const CitySearchBar: FC<ICitySearchBarProps> = ({
         />
         <Button
           onClick={handleGetForecast}
+          data-testid="searchButton"
           variant="outlined"
           sx={{
             borderRadius: "1rem",
